@@ -1,0 +1,63 @@
+{
+  "project": {
+    "name": "CMOS Starter",
+    "version": "2.0.0",
+    "description": "Mission orchestration starter kit with SQLite runtime helpers, security guardrails, and Mission Protocol templates.",
+    "status": "starter-template",
+    "start_date": "",
+    "deployment": {
+      "platform": "Local/Node.js",
+      "integration_target": "Mission Protocol v2 projects",
+      "environment": "development"
+    }
+  },
+  "working_memory": {
+    "active_domain": "starter",
+    "session_count": 0,
+    "last_session": null,
+    "agents_md_path": "./agents.md",
+    "agents_md_loaded": false,
+    "active_mission": null,
+    "domains": {
+      "starter": {
+        "status": "planning",
+        "priority": 1,
+        "current_mission": null,
+        "missions": {},
+        "critical_facts": [
+          "Populate this list with the most important truths about your project before starting missions.",
+          "foundational-docs/roadmap_template.md and foundational-docs/tech_arch_template.md are the default templates for roadmap and architecture hand-offs."
+        ],
+        "constraints": [
+          "Keep the distributed starter free of seeded mission or sprint data.",
+          "Maintain parity between the SQLite database and whichever file mirrors your team elects to manage.",
+          "Document updates to foundational references or runtime helpers in MASTER_CONTEXT.json."
+        ],
+        "decisions_made": [],
+        "files_created": []
+      }
+    }
+  },
+  "technical_context": {
+    "dependencies": [
+      "Python 3.11+",
+      "Node.js 20+ (for optional tooling and tests)"
+    ],
+    "tooling": {
+      "seed_database": "python scripts/seed_sqlite.py --data-root <path-to-planning-repo>",
+      "validate_parity": "python scripts/validate_parity.py --data-root <path-to-planning-repo>",
+      "mission_runtime": "python scripts/mission_runtime.py --help"
+    },
+    "reference_docs": [
+      "foundational-docs/roadmap_template.md",
+      "foundational-docs/tech_arch_template.md"
+    ]
+  },
+  "context_health": {
+    "size_kb": 0,
+    "size_limit_kb": 100,
+    "sessions_since_reset": 0,
+    "last_reset": "",
+    "compression_enabled": false
+  }
+}

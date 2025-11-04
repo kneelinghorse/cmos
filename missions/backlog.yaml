@@ -1,0 +1,38 @@
+# pack.yaml - Placeholder metadata for the starter backlog
+name: "Planning.SprintPlan.v1"
+version: "0.0.0"
+displayName: "Starter Backlog (Empty)"
+description: "Ships without sprint data so downstream teams can populate their own plan."
+author: "CMOS Starter Team"
+schema: "./schemas/SprintPlan.v1.json"
+
+---
+
+# Mission File: starter-backlog.yaml
+
+missionId: "SP-STARTER-000"
+
+objective: "Provide an empty backlog scaffold that teams can customise for their project."
+
+context: |
+  This starter backlog intentionally ships without sprint or mission data. Mirror your team's
+  planning repository into this file (or point the tooling at your external management repo)
+  before running mission orchestration workflows.
+
+successCriteria:
+  - "Populate domainFields.sprints with your active sprint definitions."
+  - "Keep mission status values synchronised between the backlog and the SQLite database."
+  - "Maintain missionDependencies to reflect required execution order."
+
+deliverables:
+  - "An updated backlog.yaml that represents the project's real sprint plan."
+
+domainFields:
+  type: "Planning.SprintPlan.v1"
+
+  sprints: []
+
+  missionDependencies: []
+
+  promptMapping:
+    prompts: []
