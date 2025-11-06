@@ -54,5 +54,9 @@
       "foundational-docs/tech_arch_template.md"
     ],
     "when_we_resume": []
+  },
+  "metadata": {
+    "migrated_at": "2025-11-06T05:09:02.870476+00:00",
+    "source_version": "cmos-v1"
   }
 }

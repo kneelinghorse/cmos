@@ -9,6 +9,7 @@ utilities can operate against the canonical database consistently.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sqlite3
 from contextlib import contextmanager
@@ -39,6 +40,10 @@ class HealthStatus:
 
 def _utc_now() -> str:
     return datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _canonical_json(payload: Dict[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 class SQLiteClient:
@@ -171,12 +176,50 @@ class SQLiteClient:
         except json.JSONDecodeError as error:
             raise SQLiteClientError(f"Context {context_id} contains invalid JSON") from error
 
+    def add_context_snapshot(
+        self,
+        context_id: str,
+        payload: Dict[str, Any],
+        *,
+        session_id: str | None = None,
+        source: str | None = None,
+        created_at: str | None = None
+    ) -> bool:
+        canonical = _canonical_json(payload)
+        digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        last = self.fetchone(
+            "SELECT content_hash FROM context_snapshots WHERE context_id = :id ORDER BY created_at DESC LIMIT 1",
+            {"id": context_id}
+        )
+        if last and last.get("content_hash") == digest:
+            return False
+        pretty = json.dumps(payload, ensure_ascii=False, indent=2)
+        timestamp = created_at or _utc_now()
+        self.execute(
+            """
+            INSERT INTO context_snapshots (context_id, session_id, source, content_hash, content, created_at)
+            VALUES (:context_id, :session_id, :source, :content_hash, :content, :created_at)
+            """,
+            {
+                "context_id": context_id,
+                "session_id": session_id,
+                "source": source or "",
+                "content_hash": digest,
+                "content": pretty,
+                "created_at": timestamp,
+            }
+        )
+        return True
+
     def set_context(
         self,
         context_id: str,
         payload: Dict[str, Any],
         *,
-        source_path: str | None = None
+        source_path: str | None = None,
+        session_id: str | None = None,
+        snapshot: bool = True,
+        snapshot_source: str | None = None
     ) -> None:
         """Persist a JSON payload to the contexts table and stamp updated_at."""
         existing = self.fetchone(
@@ -189,6 +232,7 @@ class SQLiteClient:
             else (existing.get("source_path") if existing else "")
         )
         content = json.dumps(payload, ensure_ascii=False, indent=2)
+        timestamp = _utc_now()
         self.execute(
             """
             INSERT OR REPLACE INTO contexts (id, source_path, content, updated_at)
@@ -198,9 +242,17 @@ class SQLiteClient:
                 "id": context_id,
                 "source_path": resolved_source,
                 "content": content,
-                "updated_at": _utc_now(),
+                "updated_at": timestamp,
             },
         )
+        if snapshot:
+            self.add_context_snapshot(
+                context_id,
+                payload,
+                session_id=session_id,
+                source=snapshot_source or resolved_source,
+                created_at=timestamp,
+            )
 
 
 def _run_cli(args: argparse.Namespace) -> int:

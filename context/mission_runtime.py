@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -91,6 +92,8 @@ class MissionRuntime:
         self.backlog_path = self.repo_root / "missions" / "backlog.yaml"
         self.sessions_path = self.repo_root / "SESSIONS.jsonl"
         self.telemetry_dir = self.repo_root / "telemetry" / "events"
+        self.project_context_path = self.repo_root / "PROJECT_CONTEXT.json"
+        self.master_context_path = self.repo_root / "context" / "MASTER_CONTEXT.json"
         self.client = SQLiteClient(self.db_path, schema_path=self.schema_path)
 
     def close(self) -> None:
@@ -101,6 +104,162 @@ class MissionRuntime:
         self._write_health_event(status)
         if not status.ok:
             raise MissionRuntimeError(f"Database health check failed: {status.message}")
+
+    def _load_context(self, context_id: str) -> Dict[str, Any]:
+        payload = self.client.get_context(context_id) or {}
+        return deepcopy(payload)
+
+    @staticmethod
+    def _session_hint(payload: Dict[str, Any]) -> Optional[str]:
+        working = payload.get("working_memory") or {}
+        for key in ("current_session", "active_mission", "last_session"):
+            value = working.get(key)
+            if value:
+                return str(value)
+        return None
+
+    @staticmethod
+    def _ensure_list(container: Dict[str, Any], key: str) -> List[Any]:
+        value = container.get(key)
+        if isinstance(value, list):
+            return value
+        new_list: List[Any] = []
+        container[key] = new_list
+        return new_list
+
+    def _update_context_health(
+        self,
+        payload: Dict[str, Any],
+        *,
+        ts: str,
+        increment_sessions: bool = False
+    ) -> None:
+        health = payload.setdefault("context_health", {})
+        if increment_sessions:
+            health["sessions_since_reset"] = int(health.get("sessions_since_reset") or 0) + 1
+        health["last_update"] = ts
+        serialized = json.dumps(payload, ensure_ascii=False)
+        size_kb = len(serialized.encode("utf-8")) / 1024
+        health["size_kb"] = round(size_kb, 2)
+        health.setdefault("size_limit_kb", 100)
+
+    def _touch_working_memory(
+        self,
+        payload: Dict[str, Any],
+        *,
+        mission_id: str,
+        ts: str,
+        agent: str,
+        summary: str,
+        action: str,
+        next_mission: Optional[str] = None
+    ) -> None:
+        working = payload.setdefault("working_memory", {})
+        history = self._ensure_list(working, "session_history")
+        history = [item for item in history if isinstance(item, dict)]
+        entry = {
+            "mission": mission_id,
+            "agent": agent,
+            "summary": summary,
+            "action": action,
+            "ts": ts
+        }
+        history.append(entry)
+        if len(history) > 50:
+            del history[:-50]
+        working["session_history"] = history
+
+        working["last_session"] = ts
+        working["session_count"] = int(working.get("session_count") or 0) + 1
+
+        if action == "start":
+            working["active_mission"] = mission_id
+        elif action == "complete":
+            working["active_mission"] = next_mission
+            working["last_completed_mission"] = mission_id
+        elif action == "blocked":
+            working["active_mission"] = None
+            working["last_blocked_mission"] = mission_id
+
+        blocked = self._ensure_list(working, "blocked_missions")
+        if action == "blocked":
+            if mission_id not in blocked:
+                blocked.append(mission_id)
+        else:
+            if mission_id in blocked:
+                blocked.remove(mission_id)
+
+    @staticmethod
+    def _remove_blocker(next_session: Dict[str, Any], mission_id: str) -> None:
+        blockers = next_session.get("blockers") or []
+        if isinstance(blockers, list):
+            filtered = [item for item in blockers if item.get("mission") != mission_id]
+            if filtered:
+                next_session["blockers"] = filtered
+            else:
+                next_session.pop("blockers", None)
+
+        for key in ("important_reminders", "when_we_resume"):
+            items = next_session.get(key)
+            if isinstance(items, list):
+                updated = [item for item in items if mission_id not in json.dumps(item, ensure_ascii=False)]
+                if updated:
+                    next_session[key] = updated
+                else:
+                    next_session.pop(key, None)
+
+    def _record_blocker(
+        self,
+        next_session: Dict[str, Any],
+        *,
+        mission_id: str,
+        ts: str,
+        summary: str,
+        reason: str,
+        needs: Optional[List[str]]
+    ) -> None:
+        blockers = self._ensure_list(next_session, "blockers")
+        blockers = [item for item in blockers if item.get("mission") != mission_id]
+        blockers.append(
+            {
+                "mission": mission_id,
+                "recorded_at": ts,
+                "summary": summary,
+                "reason": reason,
+                "needs": needs or []
+            }
+        )
+        next_session["blockers"] = blockers
+
+        reminder = f"{mission_id}: {reason}"
+        reminders = self._ensure_list(next_session, "important_reminders")
+        if reminder not in reminders:
+            reminders.append(reminder)
+
+        if needs:
+            resume = self._ensure_list(next_session, "when_we_resume")
+            for need in needs:
+                note = f"{mission_id} -> {need}"
+                if note not in resume:
+                    resume.append(note)
+
+    def _persist_contexts(self, project: Dict[str, Any], master: Dict[str, Any], *, session_id: str) -> None:
+        self.client.set_context(
+            "project_context",
+            project,
+            source_path=str(self.project_context_path),
+            session_id=session_id,
+            snapshot=True,
+            snapshot_source=str(self.project_context_path)
+        )
+        self.client.set_context(
+            "master_context",
+            master,
+            source_path=str(self.master_context_path),
+            session_id=session_id,
+            snapshot=True,
+            snapshot_source=str(self.master_context_path)
+        )
 
     def fetch_next_candidate(self) -> Optional[Dict[str, Any]]:
         rows = self.client.fetchall(
@@ -141,6 +300,32 @@ class MissionRuntime:
         metadata["started_at"] = ts
 
         with self.client.transaction() as conn:
+            project_context = self._load_context("project_context")
+            master_context = self._load_context("master_context")
+
+            self._touch_working_memory(
+                project_context,
+                mission_id=mission_id,
+                ts=ts,
+                agent=agent,
+                summary=summary,
+                action="start"
+            )
+            self._touch_working_memory(
+                master_context,
+                mission_id=mission_id,
+                ts=ts,
+                agent=agent,
+                summary=summary,
+                action="start"
+            )
+
+            next_session = master_context.setdefault("next_session_context", {})
+            self._remove_blocker(next_session, mission_id)
+
+            self._update_context_health(project_context, ts=ts, increment_sessions=True)
+            self._update_context_health(master_context, ts=ts, increment_sessions=True)
+
             conn.execute(
                 """
                 UPDATE missions
@@ -160,6 +345,8 @@ class MissionRuntime:
                 "summary": summary
             }
             raw_event = self._insert_session_event(conn, event)
+
+            self._persist_contexts(project_context, master_context, session_id=mission_id)
 
         if append_to_file:
             self._append_session_event(raw_event)
@@ -193,6 +380,9 @@ class MissionRuntime:
         next_mission_id: Optional[str] = None
 
         with self.client.transaction() as conn:
+            project_context = self._load_context("project_context")
+            master_context = self._load_context("master_context")
+
             conn.execute(
                 """
                 UPDATE missions
@@ -216,6 +406,38 @@ class MissionRuntime:
                     next_status = "In Progress" if immediate else "Current"
                     next_hint = f"{next_mission_id} is now {next_status}"
 
+            action = "complete"
+            self._touch_working_memory(
+                project_context,
+                mission_id=mission_id,
+                ts=ts,
+                agent=agent,
+                summary=summary,
+                action=action,
+                next_mission=next_mission_id if immediate else None
+            )
+            self._touch_working_memory(
+                master_context,
+                mission_id=mission_id,
+                ts=ts,
+                agent=agent,
+                summary=summary,
+                action=action,
+                next_mission=next_mission_id if immediate else None
+            )
+
+            next_session = master_context.setdefault("next_session_context", {})
+            self._remove_blocker(next_session, mission_id)
+            if next_mission_id:
+                resume = next_session.setdefault("when_we_resume", [])
+                if isinstance(resume, list):
+                    note = f"Pick up {next_mission_id}"
+                    if note not in resume:
+                        resume.append(note)
+
+            self._update_context_health(project_context, ts=ts, increment_sessions=True)
+            self._update_context_health(master_context, ts=ts, increment_sessions=True)
+
             event = {
                 "ts": ts,
                 "agent": agent,
@@ -226,6 +448,8 @@ class MissionRuntime:
                 "next_hint": next_hint
             }
             raw_event = self._insert_session_event(conn, event)
+
+            self._persist_contexts(project_context, master_context, session_id=mission_id)
 
         if append_to_file:
             self._append_session_event(raw_event)
@@ -274,6 +498,9 @@ class MissionRuntime:
             metadata.pop("blocked_needs", None)
 
         with self.client.transaction() as conn:
+            project_context = self._load_context("project_context")
+            master_context = self._load_context("master_context")
+
             conn.execute(
                 """
                 UPDATE missions
@@ -301,6 +528,38 @@ class MissionRuntime:
                 "reason": reason
             }
             raw_event = self._insert_session_event(conn, event)
+
+            self._touch_working_memory(
+                project_context,
+                mission_id=mission_id,
+                ts=ts,
+                agent=agent,
+                summary=summary,
+                action="blocked"
+            )
+            self._touch_working_memory(
+                master_context,
+                mission_id=mission_id,
+                ts=ts,
+                agent=agent,
+                summary=summary,
+                action="blocked"
+            )
+
+            next_session = master_context.setdefault("next_session_context", {})
+            self._record_blocker(
+                next_session,
+                mission_id=mission_id,
+                ts=ts,
+                summary=summary,
+                reason=reason,
+                needs=needs
+            )
+
+            self._update_context_health(project_context, ts=ts, increment_sessions=True)
+            self._update_context_health(master_context, ts=ts, increment_sessions=True)
+
+            self._persist_contexts(project_context, master_context, session_id=mission_id)
 
         if append_to_file:
             self._append_session_event(raw_event)

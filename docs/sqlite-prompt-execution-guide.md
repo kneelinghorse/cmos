@@ -81,7 +81,7 @@ The CMOS starter now treats `db/cmos.sqlite` as the single source of truth for m
      --agent codex \
      --summary "Kick-off database adoption work"
    ```
-   - This updates `missions.status`, stamps `metadata.started_at`, and appends a session event stored in `session_events`.
+   - This updates `missions.status`, stamps `metadata.started_at`, bumps `project_context.working_memory.session_count`, refreshes `active_mission`, and captures a transactional snapshot of both contexts (including `context_health.last_update`).
 
 3. **Execute deliverables**  
    - Follow mission instructions, run guardrail suites under `context/` or `npm run test:*`, and capture artefacts as needed.
@@ -96,7 +96,7 @@ The CMOS starter now treats `db/cmos.sqlite` as the single source of truth for m
        --notes "Runtime helpers relocated; parity script updated."
      ```
      - Sets `missions.status = 'Completed'`, populates `completed_at`, writes notes, promotes the next mission, and logs the completion event.
-     - Updates `project_context` with session counters and last mission metadata.
+     - Updates `project_context`/`master_context` session counters, clears any blocker reminders for the mission, and records the completion in `working_memory.session_history`.
   - Blocked:
     ```bash
     python scripts/mission_runtime.py block \
@@ -107,7 +107,7 @@ The CMOS starter now treats `db/cmos.sqlite` as the single source of truth for m
       --need "Approve revised schema" \
       --next-hint "Ping architecture team for review"
     ```
-    - Provide one or more `--need` flags to capture unblock requirements. The helper sets `missions.status = 'Blocked'`, records the reason/needs in metadata, and appends a blocked session event without promoting another mission.
+     - Provide one or more `--need` flags to capture unblock requirements. The helper sets `missions.status = 'Blocked'`, records the reason/needs in metadata, pushes a structured blocker entry into `master_context.next_session_context`, and appends a blocked session event without promoting another mission.
 
 5. **Telemetry & health**  
    - Mission runtime emits a health event into `telemetry/events/database-health.jsonl` each time it touches the database. Review the log if parity or schema issues appear.

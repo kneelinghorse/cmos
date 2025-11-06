@@ -43,6 +43,20 @@ CREATE TABLE IF NOT EXISTS contexts (
   updated_at TEXT
 );
 
+CREATE TABLE IF NOT EXISTS context_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  context_id TEXT NOT NULL,
+  session_id TEXT,
+  source TEXT,
+  content_hash TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (context_id) REFERENCES contexts(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_context_snapshots_ctx ON context_snapshots (context_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_context_snapshots_hash ON context_snapshots (context_id, content_hash);
+
 CREATE TABLE IF NOT EXISTS session_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts TEXT,

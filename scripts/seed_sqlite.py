@@ -10,6 +10,7 @@ new SQLite-backed prototype defined in mission B3.1.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sqlite3
 import sys
@@ -172,9 +173,24 @@ def insert_dependencies(connection: sqlite3.Connection, dependencies: Iterable[D
     )
 
 
+def _canonical_json(payload: Dict[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _session_hint(payload: Dict[str, Any]) -> str | None:
+    working = payload.get("working_memory") or {}
+    for key in ("last_session", "active_mission", "current_session"):
+        value = working.get(key)
+        if value:
+            return str(value)
+    return None
+
+
 def insert_context(connection: sqlite3.Connection, context_id: str, source_path: Path, content: Dict[str, Any]) -> None:
     if not content:
         return
+    timestamp = utc_now()
+    pretty = json.dumps(content, ensure_ascii=False, indent=2)
     connection.execute(
         """
         INSERT OR REPLACE INTO contexts (id, source_path, content, updated_at)
@@ -183,8 +199,31 @@ def insert_context(connection: sqlite3.Connection, context_id: str, source_path:
         (
             context_id,
             str(source_path),
-            json.dumps(content, ensure_ascii=False, indent=2),
-            utc_now()
+            pretty,
+            timestamp
+        )
+    )
+
+    canonical = _canonical_json(content)
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    existing = connection.execute(
+        "SELECT content_hash FROM context_snapshots WHERE context_id = ? ORDER BY created_at DESC LIMIT 1",
+        (context_id,)
+    ).fetchone()
+    if existing and existing["content_hash"] == digest:
+        return
+    connection.execute(
+        """
+        INSERT INTO context_snapshots (context_id, session_id, source, content_hash, content, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            context_id,
+            _session_hint(content),
+            str(source_path),
+            digest,
+            pretty,
+            timestamp
         )
     )
 

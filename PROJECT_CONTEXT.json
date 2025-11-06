@@ -59,5 +59,9 @@
     "sessions_since_reset": 0,
     "last_reset": "",
     "compression_enabled": false
+  },
+  "metadata": {
+    "migrated_at": "2025-11-06T05:09:02.869744+00:00",
+    "source_version": "cmos-v1"
   }
 }
