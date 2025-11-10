@@ -256,14 +256,14 @@
 
 **[Outline implementation phases]**
 
-### MVP (Timeline: [X weeks])
+### MVP (Sprint 1-2)
 **[What is the minimum viable system?]**
 
 **Deliverables:**
 - [Core feature 1]
 - [Core feature 2]
 
-### Phase 2 (Timeline: [X weeks])
+### Sprint 3-4
 **[What comes next?]**
 
 **Deliverables:**

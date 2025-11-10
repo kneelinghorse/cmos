@@ -1,10 +1,10 @@
+---
 name: Planning.SprintPlan.v1
 version: 0.0.0
-displayName: CMOS Backlog Export
-description: Backlog export generated from the CMOS SQLite database.
+displayName: CMOS Starter Backlog
+description: Empty backlog template for new CMOS projects
 author: CMOS
 schema: ./schemas/SprintPlan.v1.json
-generatedAt: '2025-11-06T05:09:43.617391+00:00'
 ---
 domainFields:
   type: Planning.SprintPlan.v1

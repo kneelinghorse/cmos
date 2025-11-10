@@ -20,9 +20,28 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import yaml
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
+
+def _find_cmos_root() -> Path:
+    """Find cmos/ directory from any working directory."""
+    script_dir = Path(__file__).resolve().parent
+    candidate = script_dir.parent
+    if (candidate / "db" / "schema.sql").exists() and (candidate / "agents.md").exists():
+        return candidate
+    if (Path.cwd() / "cmos" / "db" / "schema.sql").exists():
+        return Path.cwd() / "cmos"
+    current = Path.cwd().resolve()
+    for _ in range(5):
+        if (current / "cmos" / "db" / "schema.sql").exists():
+            return current / "cmos"
+        if current.parent == current:
+            break
+        current = current.parent
+    raise RuntimeError("Cannot find cmos/ directory. Please run from project root.")
+
+
+CMOS_ROOT = _find_cmos_root()
+if str(CMOS_ROOT) not in sys.path:
+    sys.path.insert(0, str(CMOS_ROOT))
 
 from context.db_client import SQLiteClient, SQLiteClientError
 
@@ -336,12 +355,11 @@ def seed_database(root: Path, db_path: Path, data_root: Path | None = None) -> N
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Seed the CMOS SQLite prototype database")
-    default_root = Path(__file__).resolve().parents[1]
     parser.add_argument(
         "--root",
         type=Path,
-        default=default_root,
-        help="Path to the project root (default: %(default)s)"
+        default=CMOS_ROOT,
+        help="Path to cmos/ directory (default: auto-detected)"
     )
     parser.add_argument(
         "--output",

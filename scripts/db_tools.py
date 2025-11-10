@@ -15,13 +15,53 @@ try:
 except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
     raise SystemExit("PyYAML is required for db_tools.py") from exc
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
+
+def _find_cmos_root() -> Path:
+    """Find cmos/ directory from any working directory.
+    
+    Searches in order:
+    1. Check if script is in cmos/scripts/ (standard location)
+    2. Check if cmos/ exists relative to cwd
+    3. Walk up parent directories looking for cmos/
+    
+    Returns:
+        Path to cmos/ directory
+        
+    Raises:
+        RuntimeError: If cmos/ directory cannot be found
+    """
+    script_dir = Path(__file__).resolve().parent
+    
+    # Are we in cmos/scripts/?
+    candidate = script_dir.parent
+    if (candidate / "db" / "schema.sql").exists() and (candidate / "agents.md").exists():
+        return candidate
+    
+    # Is cmos/ a subdirectory of cwd?
+    if (Path.cwd() / "cmos" / "db" / "schema.sql").exists():
+        return Path.cwd() / "cmos"
+    
+    # Walk up from cwd looking for cmos/
+    current = Path.cwd().resolve()
+    for _ in range(5):
+        if (current / "cmos" / "db" / "schema.sql").exists():
+            return current / "cmos"
+        if current.parent == current:  # Reached filesystem root
+            break
+        current = current.parent
+    
+    raise RuntimeError(
+        "Cannot find cmos/ directory. Please run from project root or set CMOS_ROOT environment variable."
+    )
+
+
+CMOS_ROOT = _find_cmos_root()
+if str(CMOS_ROOT) not in sys.path:
+    sys.path.insert(0, str(CMOS_ROOT))
 
 from context.db_client import SQLiteClient, SQLiteClientError
 
-DEFAULT_DB_PATH = ROOT_DIR / "db" / "cmos.sqlite"
+DEFAULT_DB_PATH = CMOS_ROOT / "db" / "cmos.sqlite"
 
 
 def _open_client(db_path: Path) -> SQLiteClient:
@@ -109,7 +149,7 @@ def export_contexts(args: argparse.Namespace) -> None:
     finally:
         client.close()
 
-    output_root = args.output_root.resolve()
+    output_root = args.output_root.resolve() if args.output_root else CMOS_ROOT
     project_path = output_root / "PROJECT_CONTEXT.json"
     master_path = output_root / "context" / "MASTER_CONTEXT.json"
     _ensure_output_path(project_path)
@@ -228,8 +268,8 @@ def parse_args() -> argparse.Namespace:
     export_ctx.add_argument(
         "--output-root",
         type=Path,
-        default=ROOT_DIR,
-        help="Directory that will receive PROJECT_CONTEXT.json and context/MASTER_CONTEXT.json (default: repository root)",
+        default=None,
+        help="Directory that will receive PROJECT_CONTEXT.json and context/MASTER_CONTEXT.json (default: cmos root)",
     )
     export_ctx.set_defaults(func=export_contexts)
 
@@ -237,8 +277,8 @@ def parse_args() -> argparse.Namespace:
     export_backlog_parser.add_argument(
         "--output",
         type=Path,
-        default=ROOT_DIR / "missions" / "backlog.yaml",
-        help="Output backlog YAML path (default: missions/backlog.yaml)",
+        default=CMOS_ROOT / "missions" / "backlog.yaml",
+        help="Output backlog YAML path (default: cmos/missions/backlog.yaml)",
     )
     export_backlog_parser.set_defaults(func=export_backlog)
 

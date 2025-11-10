@@ -7,7 +7,25 @@ import sys
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
+def _find_cmos_root() -> Path:
+    """Find cmos/ directory from any working directory."""
+    script_dir = Path(__file__).resolve().parent
+    candidate = script_dir.parent
+    if (candidate / "db" / "schema.sql").exists() and (candidate / "agents.md").exists():
+        return candidate
+    if (Path.cwd() / "cmos" / "db" / "schema.sql").exists():
+        return Path.cwd() / "cmos"
+    current = Path.cwd().resolve()
+    for _ in range(5):
+        if (current / "cmos" / "db" / "schema.sql").exists():
+            return current / "cmos"
+        if current.parent == current:
+            break
+        current = current.parent
+    raise RuntimeError("Cannot find cmos/ directory. Please run from project root.")
+
+
+CMOS_ROOT = _find_cmos_root()
 
 # Each entry: file path -> required substrings, forbidden substrings
 CHECKS = {
@@ -64,7 +82,7 @@ def validate_file(path: Path, required: list[str], forbidden: list[str]) -> list
 def main() -> int:
     failures: list[str] = []
     for relative_path, config in CHECKS.items():
-        file_path = ROOT / relative_path
+        file_path = CMOS_ROOT / relative_path
         failures.extend(
             validate_file(
                 file_path,

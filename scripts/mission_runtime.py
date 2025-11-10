@@ -8,16 +8,42 @@ import json
 import sys
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
 
-from context.mission_runtime import MissionRuntime, MissionRuntimeError, utc_now
+def _find_cmos_root() -> Path:
+    """Find cmos/ directory from any working directory."""
+    script_dir = Path(__file__).resolve().parent
+    candidate = script_dir.parent
+    if (candidate / "db" / "schema.sql").exists() and (candidate / "agents.md").exists():
+        return candidate
+    if (Path.cwd() / "cmos" / "db" / "schema.sql").exists():
+        return Path.cwd() / "cmos"
+    current = Path.cwd().resolve()
+    for _ in range(5):
+        if (current / "cmos" / "db" / "schema.sql").exists():
+            return current / "cmos"
+        if current.parent == current:
+            break
+        current = current.parent
+    raise RuntimeError("Cannot find cmos/ directory. Please run from project root.")
+
+
+CMOS_ROOT = _find_cmos_root()
+if str(CMOS_ROOT) not in sys.path:
+    sys.path.insert(0, str(CMOS_ROOT))
+
+from context.mission_runtime import (
+    MissionRuntime,
+    MissionRuntimeError,
+    block as block_mission,
+    complete as complete_mission,
+    start as start_mission,
+    utc_now,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="CMOS mission runtime helper")
-    parser.add_argument("--root", type=Path, default=ROOT_DIR, help="Repository root (default: %(default)s)")
+    parser.add_argument("--root", type=Path, default=CMOS_ROOT, help="CMOS directory (default: auto-detected)")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -26,7 +52,6 @@ def build_parser() -> argparse.ArgumentParser:
     start_parser.add_argument("--agent", default="codex", help="Agent identifier for session logging")
     start_parser.add_argument("--summary", required=True, help="Session summary message")
     start_parser.add_argument("--ts", help="ISO timestamp (UTC). Defaults to now.")
-    start_parser.add_argument("--skip-session-file", action="store_true", help="Do not append to SESSIONS.jsonl (DB only)")
 
     complete_parser = subparsers.add_parser("complete", help="Mark a mission as Completed")
     complete_parser.add_argument("--mission", required=True, help="Mission identifier (e.g. S4.1)")
@@ -37,7 +62,6 @@ def build_parser() -> argparse.ArgumentParser:
     complete_parser.add_argument("--next-hint", help="Override next_hint field in session log")
     complete_parser.add_argument("--no-promote", action="store_true", help="Do not promote the next queued mission")
     complete_parser.add_argument("--immediate", action="store_true", help="Promote next mission directly to In Progress")
-    complete_parser.add_argument("--skip-session-file", action="store_true", help="Do not append to SESSIONS.jsonl (DB only)")
 
     block_parser = subparsers.add_parser("block", help="Mark a mission as Blocked")
     block_parser.add_argument("--mission", required=True, help="Mission identifier (e.g. S4.1)")
@@ -47,7 +71,6 @@ def build_parser() -> argparse.ArgumentParser:
     block_parser.add_argument("--need", action="append", default=[], help="Add a required follow-up item (can be repeated)")
     block_parser.add_argument("--ts", help="ISO timestamp (UTC). Defaults to now.")
     block_parser.add_argument("--next-hint", help="Follow-up hint to include in the session log")
-    block_parser.add_argument("--skip-session-file", action="store_true", help="Do not append to SESSIONS.jsonl (DB only)")
 
     status_parser = subparsers.add_parser("status", help="Show the highest priority mission candidates")
     status_parser.add_argument("--limit", type=int, default=5, help="Limit number of missions displayed")
@@ -56,38 +79,28 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def handle_start(args: argparse.Namespace) -> None:
-    runtime = MissionRuntime(repo_root=args.root)
-    try:
-        runtime.ensure_database()
-        result = runtime.start_mission(
-            args.mission,
-            agent=args.agent,
-            summary=args.summary,
-            ts=args.ts or utc_now(),
-            append_to_file=not args.skip_session_file
-        )
-    finally:
-        runtime.close()
+    result = start_mission(
+        args.mission,
+        agent=args.agent,
+        summary=args.summary,
+        ts=args.ts or utc_now(),
+        repo_root=args.root,
+    )
     print(json.dumps(result.event, indent=2, ensure_ascii=False))
 
 
 def handle_complete(args: argparse.Namespace) -> None:
-    runtime = MissionRuntime(repo_root=args.root)
-    try:
-        runtime.ensure_database()
-        result = runtime.complete_mission(
-            args.mission,
-            agent=args.agent,
-            summary=args.summary,
-            notes=args.notes,
-            ts=args.ts or utc_now(),
-            next_hint=args.next_hint,
-            promote_next=not args.no_promote,
-            immediate=args.immediate,
-            append_to_file=not args.skip_session_file
-        )
-    finally:
-        runtime.close()
+    result = complete_mission(
+        args.mission,
+        agent=args.agent,
+        summary=args.summary,
+        notes=args.notes,
+        ts=args.ts or utc_now(),
+        next_hint=args.next_hint,
+        promote_next=not args.no_promote,
+        immediate=args.immediate,
+        repo_root=args.root,
+    )
     output = {
         "event": result.event,
         "next_mission": result.next_mission
@@ -96,21 +109,16 @@ def handle_complete(args: argparse.Namespace) -> None:
 
 
 def handle_block(args: argparse.Namespace) -> None:
-    runtime = MissionRuntime(repo_root=args.root)
-    try:
-        runtime.ensure_database()
-        result = runtime.block_mission(
-            args.mission,
-            agent=args.agent,
-            summary=args.summary,
-            reason=args.reason,
-            needs=args.need or [],
-            ts=args.ts or utc_now(),
-            next_hint=args.next_hint,
-            append_to_file=not args.skip_session_file
-        )
-    finally:
-        runtime.close()
+    result = block_mission(
+        args.mission,
+        agent=args.agent,
+        summary=args.summary,
+        reason=args.reason,
+        needs=args.need or [],
+        ts=args.ts or utc_now(),
+        next_hint=args.next_hint,
+        repo_root=args.root,
+    )
     print(json.dumps(result.event, indent=2, ensure_ascii=False))
 
 

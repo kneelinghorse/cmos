@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
+# Packages cmos/ directory contents into a distributable tarball.
+# Run from anywhere: ./cmos/scripts/package_starter.sh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DIST_DIR="${ROOT_DIR}/dist"
+# Find cmos/ directory (script is in cmos/scripts/)
+CMOS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DIST_DIR="${CMOS_DIR}/dist"
 TIMESTAMP="$(date -u +"%Y%m%dT%H%M%SZ")"
 ARCHIVE_NAME="cmos-starter-${TIMESTAMP}.tar.gz"
 ARCHIVE_PATH="${DIST_DIR}/${ARCHIVE_NAME}"
@@ -10,7 +13,6 @@ ARCHIVE_PATH="${DIST_DIR}/${ARCHIVE_NAME}"
 mkdir -p "${DIST_DIR}"
 
 EXCLUDES=(
-  "--exclude=cmos"
   "--exclude=dist"
   "--exclude=.git"
   "--exclude=.gitignore"
@@ -18,9 +20,10 @@ EXCLUDES=(
   "--exclude=*.log"
   "--exclude=telemetry/events/*.tmp"
   "--exclude=telemetry/archive"
+  "--exclude=PHASE1_INVENTORY.md"
 )
 
-cd "${ROOT_DIR}"
+cd "${CMOS_DIR}"
 tar -czf "${ARCHIVE_PATH}" "${EXCLUDES[@]}" \
   agents.md \
   context \

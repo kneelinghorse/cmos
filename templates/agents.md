@@ -1,448 +1,306 @@
 # AI Agent Configuration
 
+**Instructions**: Copy this file to your project root and customize for YOUR project.
+
+**Location**: This file should live at `project-root/agents.md` (NOT in cmos/)
+
+**Purpose**: Guide AI agents when building YOUR APPLICATION CODE.
+
+---
+
 ## Project Overview
-**Project Name**: [Project Name]
-**Project Type**: [Type: Web Application, CLI Tool, Library, etc.]
-**Primary Language**: [JavaScript, Python, TypeScript, etc.]
-**Framework**: [React, Next.js, FastAPI, etc.]
+**Project Name**: [Your Project Name]  
+**Project Type**: [Web API, Web App, CLI Tool, Library, etc.]  
+**Primary Language**: [Python, TypeScript, JavaScript, Go, etc.]  
+**Framework**: [FastAPI, React, Next.js, Express, etc.]
+
+**Description**: [Brief 1-2 sentence description of what you're building]
+
+---
 
 ## Build & Development Commands
 
 ### Installation & Setup
 ```bash
 # Install dependencies
-npm install
+[your install command]
 
-# Development server
-npm run dev
+# Setup database/environment
+[your setup commands]
 
-# Build for production
-npm run build
-
-# Run tests
-npm test
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
+# First-time setup
+[any initialization needed]
 ```
 
-### Testing Commands
+### Development
 ```bash
+# Start development server
+[your dev command]
+
+# Watch mode (if applicable)
+[your watch command]
+```
+
+### Building
+```bash
+# Build for production
+[your build command]
+
+# Build for staging (if applicable)
+[your staging build]
+```
+
+### Testing
+```bash
+# Run all tests
+[your test command]
+
 # Run unit tests
-npm run test:unit
+[your unit test command]
 
 # Run integration tests
-npm run test:integration
+[your integration test command]
 
-# Run E2E tests
-npm run test:e2e
-
-# Generate coverage report
-npm run test:coverage
+# Generate coverage
+[your coverage command]
 ```
+
+### Linting & Formatting
+```bash
+# Lint code
+[your lint command]
+
+# Format code
+[your format command]
+
+# Type checking (if applicable)
+[your type check command]
+```
+
+---
 
 ## Project Structure & Navigation
 
 ### Directory Layout
 ```
 project-root/
-├── src/                    # Source code
-├── tests/                   # Test files
-├── docs/                    # Documentation
-├── config/                   # Configuration files
-├── scripts/                   # Build and utility scripts
-├── public/                   # Static assets
-└── dist/                     # Build output
+├── [your source directory]/      # Application code
+├── tests/                         # Application tests
+├── docs/                          # Project documentation
+├── [config directory]/            # Configuration files
+├── [scripts directory]/           # Build and utility scripts
+└── cmos/                          # Project management (DO NOT write code here!)
 ```
 
-### Monorepo Navigation (if applicable)
-```bash
-# Navigate to specific package
-cd packages/[package-name]
+### Key Files
+- `[main entry point]` - [description]
+- `[config file]` - [description]
+- `[important files]` - [description]
 
-# Run commands for specific package
-npm run [package-name]:dev
+**Critical**: Never write application code in `cmos/` directory. That's for project management only.
 
-# Build specific package
-npm run build:[package-name]
-```
+---
 
 ## Coding Standards & Style
 
-### Language-Specific Guidelines
+### [Language] Guidelines
+- [Specific coding standards for your primary language]
+- [Naming conventions]
+- [Code organization patterns]
+- [Formatting rules]
 
-#### JavaScript/TypeScript
-- Use TypeScript for type safety
-- Prefer ES6+ features and modern syntax
-- Use meaningful variable and function names
-- Add JSDoc comments for public APIs
-- Prefer `const` and `let` over `var`
-- Use arrow functions for callbacks
-- Handle async/await properly
+**Examples**:
+```[language]
+// Show an example of your preferred style
+```
 
-#### Python
-- Follow PEP 8 style guidelines
-- Use type hints where appropriate
-- Prefer list comprehensions and generator expressions
-- Use `pathlib` for file path operations
-- Follow docstring conventions (Google style)
-- Use f-strings for string formatting
+### File Organization
+- [How files should be organized]
+- [Naming conventions for files]
+- [Module/package structure]
 
-### Testing Preferences
-- **Framework**: Use pytest (not unittest classes)
-- **Style**: Prefer fixtures over setup/teardown methods
-- **Coverage**: Maintain >80% test coverage
-- **Structure**: Group tests by feature/module
-- **Naming**: Use descriptive test names that explain what is being tested
+### Comments & Documentation
+- [When to write comments]
+- [Documentation string requirements]
+- [Inline documentation style]
 
-### Code Quality & Linting
-- **JavaScript**: ESLint with Airbnb config
-- **Python**: flake8 with strict configuration
-- **TypeScript**: Strict TypeScript compiler options
-- **Formatting**: Prettier for consistent code style
+---
+
+## Testing Preferences
+
+### Framework & Tools
+- **Framework**: [pytest, Jest, Mocha, etc.]
+- **Coverage target**: [80%, 90%, etc.]
+- **Coverage tool**: [pytest-cov, Istanbul, etc.]
+
+### Test Structure
+- **Test location**: `tests/` directory (NOT in cmos/)
+- **Test naming**: [test_*.py, *.test.js, etc.]
+- **Test organization**: [by feature, by module, etc.]
+
+### Testing Requirements
+- [ ] [Specific requirement 1]
+- [ ] [Specific requirement 2]
+- [ ] All features must have tests
+- [ ] Critical paths need integration tests
+- [ ] Run full suite before marking missions complete
+
+**Example test**:
+```[language]
+// Show an example test in your preferred style
+```
+
+---
 
 ## Security & Quality Guardrails
 
-### OWASP Top 10 Implementation
+### Security Rules
+- Never commit API keys or secrets
+- Use environment variables for sensitive data
+- [Your specific security requirements]
+- [Authentication/authorization patterns]
+- [Data protection requirements]
 
-#### A01: Broken Access Control
-**Security Rules:**
-- Implement proper authentication and authorization checks
-- Validate user permissions on all protected resources
-- Use principle of least privilege
-- Implement rate limiting for API endpoints
-- Log all access attempts and failures
+### Code Quality Gates
+- [Linting must pass]
+- [Type checking must pass (if applicable)]
+- [Coverage must meet threshold]
+- [Code review requirements]
 
-**Forbidden Patterns:**
-- Never use hardcoded credentials or API keys
-- Avoid direct database queries with user input
-- Never expose sensitive information in error messages
+### Forbidden Patterns
+- ❌ [Pattern 1 you want to avoid]
+- ❌ [Pattern 2 you want to avoid]
+- ❌ Hardcoded credentials
+- ❌ Raw SQL queries (use ORM/query builder)
 
-**Validation Requirements:**
-- All authentication must be validated before resource access
-- Authorization checks must be performed for every protected endpoint
-- Session management must be secure against hijacking
-
-#### A02: Cryptographic Failures
-**Security Rules:**
-- Use strong encryption algorithms (AES-256, RSA-2048)
-- Never store passwords in plaintext
-- Use TLS 1.3+ for all communications
-- Implement proper key management and rotation
-- Use cryptographically secure random number generators
-
-**Secure Patterns:**
-- Always use established crypto libraries instead of custom implementations
-- Implement proper key derivation functions (PBKDF2)
-- Use authenticated encryption for data at rest
-- Validate certificate chains and implement certificate pinning
-
-**Validation Requirements:**
-- All sensitive data must be encrypted at rest
-- All communications must use TLS 1.3+
-- Key rotation must be implemented and automated
-
-#### A03: Injection
-**Security Rules:**
-- Use parameterized queries for all database operations
-- Implement input validation and sanitization
-- Use ORM with built-in injection protection
-- Escape user-provided content in all outputs
-- Use whitelist approach for allowed inputs
-
-**Safe Patterns:**
-- Always use prepared statements with parameter binding
-- Implement input validation schemas
-- Use ORM methods that automatically escape inputs
-- Never concatenate user input into queries
-
-**Validation Requirements:**
-- All user inputs must be validated against schema
-- SQL queries must use parameter binding
-- All user-provided content must be escaped in outputs
-
-#### A04: Insecure Design
-**Security Rules:**
-- Implement secure by design principles
-- Use threat modeling for all features
-- Implement defense in depth
-- Use secure defaults and fail-safe options
-- Document security requirements for all features
-
-**Design Patterns:**
-- Implement principle of least privilege in system design
-- Use secure communication protocols by default
-- Implement proper error handling without information leakage
-- Use secure session management patterns
-
-#### A05: Security Misconfiguration
-**Security Rules:**
-- Implement secure default configurations
-- Regularly audit and update configurations
-- Disable unnecessary features and services
-- Use minimal attack surface principles
-- Implement configuration validation
-
-**Configuration Requirements:**
-- All default configurations must be secure
-- Configuration files must be validated on startup
-- Sensitive configuration must be encrypted
-- Configuration changes must be logged and audited
-
-#### A06: Vulnerable and Outdated Components
-**Security Rules:**
-- Regularly update all dependencies and components
-- Implement automated vulnerability scanning
-- Use software composition analysis (SCA) tools
-- Maintain component inventory and patch management
-- Implement component isolation and sandboxing
-
-**Dependency Management:**
-- Use automated dependency update tools
-- Implement dependency vulnerability scanning in CI/CD
-- Maintain minimal dependency footprint
-- Use trusted package repositories only
-
-#### A07: Identification and Authentication Failures
-**Security Rules:**
-- Implement multi-factor authentication (MFA)
-- Use secure password policies and storage
-- Implement proper session management
-- Use secure authentication protocols (OAuth 2.0, OpenID Connect)
-- Implement account lockout and brute force protection
-
-**Authentication Patterns:**
-- Use established authentication libraries
-- Implement secure password reset flows
-- Use short-lived tokens and refresh mechanisms
-- Implement proper logout and session invalidation
-
-#### A08: Software and Data Integrity Failures
-**Security Rules:**
-- Implement integrity checks for all data and software
-- Use digital signatures for code and data validation
-- Implement secure update mechanisms
-- Use checksums and hash verification
-- Implement secure deserialization practices
-
-**Integrity Controls:**
-- Verify integrity of all downloaded components
-- Implement code signing for all releases
-- Use secure CI/CD pipelines with integrity checks
-- Implement data integrity validation in APIs
-
-#### A09: Security Logging and Monitoring Failures
-**Security Rules:**
-- Implement comprehensive security logging
-- Log all security-relevant events
-- Implement real-time monitoring and alerting
-- Use secure logging practices (no sensitive data)
-- Implement log integrity and tamper detection
-
-**Logging Requirements:**
-- Log all authentication and authorization events
-- Log all input validation failures
-- Log all security configuration changes
-- Implement centralized logging with integrity
-
-#### A10: Server-Side Request Forgery (SSRF)
-**Security Rules:**
-- Implement SSRF protection mechanisms
-- Validate and sanitize all URLs and endpoints
-- Use allowlists for permitted destinations
-- Implement network segmentation and isolation
-- Use secure HTTP clients with SSRF protection
-
-**Protection Patterns:**
-- Validate URL schemes and hostnames
-- Implement request rate limiting per destination
-- Use network-level controls for egress traffic
-- Implement response validation and filtering
-
-### Input Validation Requirements
-- Validate all user inputs against schema
-- Sanitize data before processing
-- Implement length limits and format validation
-- Use whitelist approach for allowed inputs
-- Log all validation failures for monitoring
-
-### Error Handling Patterns
-- Implement comprehensive error handling
-- Use structured error responses
-- Log errors with appropriate context
-- Implement graceful degradation for non-critical failures
-- Never expose internal stack traces to users
+---
 
 ## Architecture Patterns
 
 ### Preferred Design Patterns
-- **Repository Pattern**: Use repository pattern for data access
-- **Service Layer**: Implement business logic in service layer
-- **Controller Pattern**: Use controllers for API endpoints
-- **Factory Pattern**: Use factories for object creation
-- **Observer Pattern**: Use observers for event handling
+- **[Pattern 1]**: [When and how to use it]
+- **[Pattern 2]**: [When and how to use it]
 
-### Integration Approaches
-- **API Integration**: Use RESTful APIs with proper versioning
-- **Database Integration**: Use connection pooling and transactions
-- **Message Queue**: Use message queues for async processing
-- **Caching**: Implement appropriate caching strategies
-
-### Performance Considerations
-- Implement lazy loading where appropriate
-- Use database indexes for query optimization
-- Implement pagination for large datasets
-- Use CDN for static assets
-- Monitor and optimize database queries
-
-## Development Workflow
-
-### Branching Strategy
-- **Main Branch**: `main` (production-ready code)
-- **Development Branch**: `develop` (integration branch)
-- **Feature Branches**: `feature/[feature-name]`
-- **Hotfix Branches**: `hotfix/[issue-number]`
-
-### Commit Message Format
-```
-[type](scope): description
-
-Examples:
-feat(auth): add OAuth2 authentication support
-fix(api): resolve user profile data corruption
-docs(readme): update installation instructions
-test(auth): add integration tests for OAuth flow
+**Examples**:
+```[language]
+// Show example implementation of preferred pattern
 ```
 
-### Code Review Process
-- All changes must be reviewed via pull request
-- Minimum of one reviewer approval required
-- Automated tests must pass before merge
-- Code coverage must not decrease
-- Documentation must be updated for API changes
+### Database Access
+- **ORM/Tool**: [SQLAlchemy, Prisma, TypeORM, etc.]
+- **Migration tool**: [Alembic, Knex, Prisma, etc.]
+- **Connection pattern**: [Connection pooling, etc.]
 
-### Testing Protocols
-- Write tests before writing code (TDD approach)
-- Run full test suite before committing
-- Integration tests must cover critical user flows
-- Performance tests for API endpoints
-- Security tests for authentication and authorization
+### API Design (if applicable)
+- **Style**: [REST, GraphQL, gRPC, etc.]
+- **Response format**: [JSON structure, error format, etc.]
+- **Authentication**: [JWT, OAuth, API keys, etc.]
 
-## AI Agent Specific Instructions
-
-### Context Loading Priority
-1. Read agents.md file first for project-specific guidance
-2. Load PROJECT_CONTEXT.json for current session state
-3. Load MASTER_CONTEXT.json for project history and decisions
-4. Reference SESSIONS.jsonl for recent mission history
-
-### Output Formatting Preferences
-- Use Markdown for documentation and reports
-- Use JSON for structured data and configuration
-- Use YAML for mission definitions and templates
-- Prefer tables over long paragraphs for data presentation
-- Include code examples with syntax highlighting
-
-### Tool Usage Guidelines
-- Prefer built-in tools over external dependencies when possible
-- Use version-specific tool configurations
-- Document tool versions and compatibility requirements
-- Implement tool validation and error handling
-
-### Communication Style
-- Be concise and direct in responses
-- Use structured formats (lists, tables, code blocks)
-- Ask clarifying questions when requirements are ambiguous
-- Provide confidence levels for uncertain information
+---
 
 ## Project-Specific Configuration
-
-### Advanced Orchestration Patterns
-- Select a single orchestration pattern per mission via `domainFields.orchestrationPatterns.selectedPattern` in Build.Implementation templates (`none|rsip|delegation|boomerang` only).
-- Patterns are mutually exclusive for Sprint 08. Enabling multiple patterns is invalid; only the configuration block that matches `selectedPattern` may set `enabled: true`.
-- Delegation pulls worker definitions from `workers/manifest.yaml`. Ensure every referenced worker template exists under `workers/`.
-- Boomerang checkpoints and state must be written to `runtime/boomerang/`; telemetry events stream to `telemetry/events/<mission-id>.jsonl`.
-- RSIP refinement loops must declare convergence criteria and stop after the configured `maxIterations` or escalate per failure policy.
-
-### Failure Escalation (All Patterns)
-- Tier 1: Automatic retry on `worker_timeout`, `evaluation_call_failure`, or `network_errors` (one retry per worker/iteration).
-- Tier 2: Pattern-specific thresholds (RSIP max iterations, Delegation two failed workers, Boomerang two failed step attempts or checkpoint write failure).
-- Tier 3: Fallback gracefully to linear execution and emit `status=fallback`, `fallbackTriggered=true` in telemetry.
-- Tier 4: Require human review before closing missions that triggered fallback; document remediation steps in mission notes.
-
-### Runtime Directories
-- `runtime/boomerang/` — checkpoint storage and resumable state bundles.
-- `telemetry/events/` — append-only JSONL streams keyed by mission id.
-- `workers/` — worker manifest plus individual worker templates used by delegation scenarios.
 
 ### Environment Variables
 ```bash
 # Development
-NODE_ENV=development
-DEBUG=true
+[YOUR_ENV_VAR]=value
+[ANOTHER_VAR]=value
 
 # Production
-NODE_ENV=production
-DEBUG=false
-API_KEY=[your-api-key]
+[PROD_VARS]=value
 ```
 
-### Database Configuration
-```yaml
-development:
-  host: localhost
-  port: 5432
-  database: project_dev
+### External Services
+- **[Service 1]**: [Purpose and configuration]
+- **[Service 2]**: [Purpose and configuration]
 
-production:
-  host: ${DB_HOST}
-  port: 5432
-  database: project_prod
-  ssl: true
+### Deployment
+- **Platform**: [Vercel, Railway, AWS, etc.]
+- **Process**: [Deployment steps or CI/CD info]
+- **Environment**: [Staging, production setup]
+
+---
+
+## CMOS Integration Notes
+
+### When Working on Application Code
+1. Read THIS agents.md (project-root/agents.md)
+2. Write code to `src/`, `app/`, or your source directory
+3. Write tests to `tests/` directory
+4. Never write application code to `cmos/`
+
+### When Working on CMOS Operations
+1. Read `cmos/agents.md` for CMOS-specific instructions
+2. Use mission runtime scripts
+3. Update missions and contexts in `cmos/`
+4. Keep application code and CMOS management separate
+
+### Before Completing Missions
+- [ ] All application tests pass
+- [ ] Code meets standards defined above
+- [ ] Documentation updated if needed
+- [ ] Mission status verified in database
+
+---
+
+## Development Workflow
+
+### Branch Strategy (if using Git)
+- **Main**: [Your main branch strategy]
+- **Development**: [Your dev branch strategy]
+- **Features**: [Your feature branch naming]
+
+### Commit Messages
 ```
+[type]([scope]): [description]
 
-### External Service Configuration
-```yaml
-# API Keys (store in environment, not code)
-api_service:
-  endpoint: https://api.example.com
-  version: v2
-  timeout: 30000
-
-# Storage Configuration
-storage:
-  type: s3
-  bucket: project-files
-  region: us-west-2
+Examples:
+feat(api): add user authentication endpoint
+fix(db): resolve connection pool timeout
+docs(readme): update installation instructions
+test(auth): add integration tests for OAuth
 ```
 
 ---
 
 ## Notes for AI Agents
 
-### Critical Context Files
-- **agents.md**: This file - primary source of project-specific guidance
-- **PROJECT_CONTEXT.json**: Current session state and working memory
-- **MASTER_CONTEXT.json**: Project history and architectural decisions
-- **SESSIONS.jsonl**: Chronological log of all agent actions
+### Context Loading Priority
+1. Load `project-root/agents.md` (THIS FILE) for application work
+2. Load `cmos/agents.md` for CMOS operations
+3. Load `cmos/PROJECT_CONTEXT.json` for current state
+4. Load `cmos/context/MASTER_CONTEXT.json` for project history
+5. Reference `cmos/SESSIONS.jsonl` for recent session history
 
-### Mission Execution Guidelines
-- Always read agents.md before starting any mission
-- Update PROJECT_CONTEXT.json after each mission completion
-- Log all significant decisions to MASTER_CONTEXT.json
-- Append session events to SESSIONS.jsonl
+### Output Standards
+- Use [Markdown, reStructuredText, etc.] for documentation
+- Use [your preferred format] for reports
+- Include code examples with syntax highlighting
+- Keep explanations [concise/detailed/etc.]
 
-### Quality Assurance
-- Follow all coding standards defined in agents.md
-- Implement all security guardrails specified
-- Use specified testing frameworks and approaches
-- Maintain code coverage thresholds defined in project
+### Communication Style
+- [Your preference: concise, detailed, technical, etc.]
+- [How to present options]
+- [When to ask clarifying questions]
 
 ---
 
-**Last Updated**: [Date]
-**Version**: 1.0.0
-**Maintained by**: [Team/Person]
+## Customization Checklist
+
+Before using this template, update:
+
+- [ ] All `[bracketed placeholders]` with your actual values
+- [ ] Project overview with real project details
+- [ ] Build commands with your actual commands
+- [ ] Project structure with your actual directories
+- [ ] Coding standards with your actual rules
+- [ ] Testing requirements with your actual framework
+- [ ] Security rules with your specific requirements
+- [ ] Remove this checklist section when done
+
+---
+
+**Template Version**: 2.0  
+**Last Updated**: 2025-11-08  
+**Copy to**: `project-root/agents.md` (NOT cmos/)  
+**Customize**: Replace all [placeholders] with your project details

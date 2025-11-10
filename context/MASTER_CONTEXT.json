@@ -1,62 +1,12 @@
 {
-  "project": {
-    "name": "CMOS Starter Template",
-    "version": "0.0.0",
-    "description": "Blank master context for new CMOS starter projects.",
-    "status": "uninitialised",
-    "start_date": null,
-    "deployment": {
-      "platform": "",
-      "integration_target": "",
-      "environment": ""
-    }
-  },
-  "working_memory": {
-    "active_domain": null,
-    "session_count": 0,
-    "last_session": null,
-    "domains": {}
-  },
-  "technical_context": {
-    "dependencies": [],
-    "research_findings": {},
-    "enhanced_features": {},
-    "integration_points": [
+  "project_identity": {},
+  "technical_foundation": {
+    "reference_docs": [
       "foundational-docs/roadmap_template.md",
       "foundational-docs/tech_arch_template.md"
     ]
   },
-  "sprint_tracking": {},
-  "context_health": {
-    "anti_pattern_detection": false,
-    "compression_enabled": false,
-    "last_reset": null,
-    "sessions_since_reset": 0,
-    "size_kb": 0,
-    "size_limit_kb": 100
-  },
-  "ai_instructions": {
-    "preferred_language": "yaml",
-    "code_style": "mission_protocol_v2",
-    "testing_required": true,
-    "documentation_level": "comprehensive",
-    "special_instructions": [
-      "Always load agents.md before starting missions.",
-      "Apply OWASP Top 10 security guidelines during implementation.",
-      "Keep PROJECT_CONTEXT.json and missions/backlog.yaml in sync with the SQLite database."
-    ]
-  },
-  "next_session_context": {
-    "blockers": [],
-    "important_reminders": [],
-    "key_reference_documents": [
-      "foundational-docs/roadmap_template.md",
-      "foundational-docs/tech_arch_template.md"
-    ],
-    "when_we_resume": []
-  },
-  "metadata": {
-    "migrated_at": "2025-11-06T05:09:02.870476+00:00",
-    "source_version": "cmos-v1"
-  }
+  "decisions_made": [],
+  "constraints": [],
+  "quality_standards": {}
 }
